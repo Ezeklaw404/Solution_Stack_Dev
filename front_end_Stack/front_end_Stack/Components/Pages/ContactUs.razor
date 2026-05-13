@@ -1,0 +1,73 @@
+﻿@page "/contact"
+
+@using System.ComponentModel.DataAnnotations
+
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<h1>Order MEAT</h1>
+<div class="row">
+    <div class="col-md-4">
+        <section>
+            <EditForm Model="Input" method="post" OnValidSubmit="Success" FormName="ContactUs">
+                <DataAnnotationsValidator />
+                <hr />
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com" />
+                    <label for="email" class="form-label">Email</label>
+                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Name" class="form-control" autocomplete="name" aria-required="true" placeholder="name" />
+                    <label for="Name" class="form-label">Name</label>
+                    <ValidationMessage For="() => Input.Name" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Input.Adress" class="form-control" autocomplete="adress" aria-required="true" placeholder="adress" />
+                    <label for="Adress" class="form-label">Adress</label>
+                    <ValidationMessage For="() => Input.Adress" class="text-danger" />
+                </div>
+                <div>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary">Submit</button>
+                </div>
+            </EditForm>
+        </section>
+    </div>
+</div>
+
+@code {
+    private string? errorMessage;
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+
+    public async Task Success()
+    {
+		await JSRuntime.InvokeVoidAsync("alert", "Order Complete");
+    }
+
+
+
+
+    private sealed class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        public string Name { get; set; } = "";
+
+        [Required]
+        public string Adress { get; set; } = "";
+    }
+}
