@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 
 @using System.Text.Json
+@using System.Text.Json.Serialization;
 
 @inject IHttpClientFactory HttpClientFactory
 @inject IConfiguration Configuration
@@ -30,11 +31,11 @@ else
                         <div class="card-img-top review-card-img-wrap d-flex justify-content-center align-items-center bg-light">
                             <img src="@review.ImageUrl"
                                  class="review-avatar img-fluid"
-                                 alt="Photo of @review.Name"
+                                 alt="Photo of @review.Id"
                                  loading="lazy" />
                         </div>
                         <div class="card-body text-center d-flex flex-column">
-                            <h5 class="card-title fw-semibold mb-2">@review.Name</h5>
+                            <h5 class="card-title fw-semibold mb-2">@review.Id</h5>
                             <div class="review-stars mb-1" aria-label="Rating: @review.Stars out of 5">
                                 @for (var star = 1; star <= 5; star++)
                                 {
@@ -51,24 +52,58 @@ else
 }
 
 @code {
-	private bool loading = true;
+    private HttpClient _http;
+    private bool loading = true;
     private List<Review> _reviews = new();
+
+    // source documentation
+    // https:developers.thecatapi.com/view-account/ylX4blBYT9FaoVd6OhvR?report=bOoHBz-8t
+    const int COUNT = 10;
+    string baseUrl = $"https://api.thecatapi.com/v1/images/search";
+    // string url = "https://api.thecatapi.com/v1/images/search?limit=10";
 
     protected override async Task OnInitializedAsync()
     {
+        _http = new HttpClient();
         await LoadUsersAsync();
     }
 
     private async Task LoadUsersAsync()
     {
-       //api stuff
+        string tempUrl = $"{baseUrl}?limit={COUNT}";
+
+
+        _reviews = await _http.GetFromJsonAsync<List<Review>>(tempUrl);
+        Random random = new Random();
+        foreach (var review in _reviews)
+        {
+            review.Stars = random.Next(1, 6);
+        } 
+        loading = false;
     }
 
 
     private class Review
     {
-		public string Name { get; set; } = string.Empty;
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
+        [JsonPropertyName("url")]
         public string ImageUrl { get; set; } = string.Empty;
-        public int Stars { get; set; }
-	}
+        public int Stars { get; set; } 
+
+
+    }
+
+
+            
+
+
+// {
+    // id: "3ej",
+    // url: "https:cdn2.thecatapi.com/images/3ej.jpg",
+    // width: 500,
+    // height: 334
+// },
 }
+
+
