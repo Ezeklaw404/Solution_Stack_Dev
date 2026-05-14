@@ -1,0 +1,74 @@
+﻿@page "/reviews"
+@rendermode InteractiveServer
+
+@using System.Text.Json
+
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+
+<PageTitle>Reviews</PageTitle>
+
+<h1 class="mb-3">Reviews</h1>
+
+@if (loading)
+{
+    <div class="d-flex align-items-center gap-3 py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading reviews...</span>
+        </div>
+        <span>Loading reviews...</span>
+    </div>
+}
+else
+{
+    <div class="container-fluid px-0">
+        <div class="row g-4">
+            @foreach (var review in _reviews)
+            {
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 review-card">
+                        <div class="card-img-top review-card-img-wrap d-flex justify-content-center align-items-center bg-light">
+                            <img src="@review.ImageUrl"
+                                 class="review-avatar img-fluid"
+                                 alt="Photo of @review.Name"
+                                 loading="lazy" />
+                        </div>
+                        <div class="card-body text-center d-flex flex-column">
+                            <h5 class="card-title fw-semibold mb-2">@review.Name</h5>
+                            <div class="review-stars mb-1" aria-label="Rating: @review.Stars out of 5">
+                                @for (var star = 1; star <= 5; star++)
+                                {
+                                    <span class="review-star @(star <= review.Stars ? "filled" : string.Empty)">&#9733;</span>
+                                }
+                            </div>
+                            <p class="text-muted small mb-0 mt-auto">@review.Stars / 5</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+	private bool loading = true;
+    private List<Review> _reviews = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+       //api stuff
+    }
+
+
+    private class Review
+    {
+		public string Name { get; set; } = string.Empty;
+        public string ImageUrl { get; set; } = string.Empty;
+        public int Stars { get; set; }
+	}
+}

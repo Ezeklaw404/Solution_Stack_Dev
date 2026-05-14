@@ -1,8 +1,15 @@
 using front_end_Stack.Components;
+using Microsoft.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHttpClient("WebApp", (sp, client) =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    client.BaseAddress = new Uri(navigationManager.BaseUri);
+});
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
