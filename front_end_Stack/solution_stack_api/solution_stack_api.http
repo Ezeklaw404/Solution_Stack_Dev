@@ -1,4 +1,4 @@
-@solution_stack_api_HostAddress = http://localhost:5223
+@solution_stack_api_HostAddress = http://localhost:5185
 
 GET {{solution_stack_api_HostAddress}}/weatherforecast/
 Accept: application/json
