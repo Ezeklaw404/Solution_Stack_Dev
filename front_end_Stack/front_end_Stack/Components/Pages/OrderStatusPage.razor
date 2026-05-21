@@ -24,85 +24,92 @@
 }
 else
 {
-<div class="container-fluid px-0">
-    <div class="row g-4">
-        @foreach (var order in _orders)
+    @if (_orders == null || !_orders.Any())
+    {
+        <div class="alert alert-info">No orders.</div>
+    }
+    else
         {
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
-                <div class="card h-100 shadow-sm border-0 review-card position-relative">
-                    <div class="position-absolute top-0 end-0 p-2">
-                        @if (editOrderId == order.ID)
-                        {
-                            <button class="btn btn-link p-1" title="Cancel Edit" @onclick="CancelEdit">
-                                <span class="fa fa-times" style="font-size:1.2rem;"></span>
-                            </button>
-                        }
-                        else
-                        {
-                            <button class="btn btn-link p-1" title="Edit" @onclick="() => StartEdit(order)">
-                                <span class="fa fa-pencil-alt" style="font-size:1.2rem;"></span>
-                            </button>
-                        }
-                    </div>
-                    <div class="card-body text-center d-flex flex-column">
-                        @if (editOrderId == order.ID && editOrder != null)
-                        {
-                            <div class="mb-1">
-                                <select @bind="editOrder.Status" class="form-select form-select-sm w-auto mx-auto">
-                                    @foreach (var status in Enum.GetValues<OrderStatusEnum>())
-                                    {
-                                        <option value="@status">@status</option>
-                                    }
-                                </select>
-                            </div>
-                            <h5 class="card-title fw-semibold mb-2">Order @order.ID</h5>
-                            <div class="mb-1">
-                                <strong>Name:</strong>
-                                <input class="form-control form-control-sm" @bind="editOrder.Name" />
-                            </div>
-                            <div class="mb-1">
-                                <strong>Email:</strong>
-                                <input class="form-control form-control-sm" @bind="editOrder.Email" />
-                            </div>
-                            <div class="mb-1">
-                                <strong>Address:</strong>
-                                <input class="form-control form-control-sm" @bind="editOrder.Address" />
-                            </div>
-                            <div class="d-flex justify-content-center gap-2 mt-2">
-                                <button class="btn btn-success btn-sm" title="Save" @onclick="() => SaveEdit(order.ID)">
-                                    <span class="fa fa-check"></span>
+    <div class="container-fluid px-0">
+        <div class="row g-4">
+            @foreach (var order in _orders)
+            {
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                    <div class="card h-100 shadow-sm border-0 review-card position-relative">
+                        <div class="position-absolute top-0 end-0 p-2">
+                            @if (editOrderId == order.ID)
+                            {
+                                <button class="btn btn-link p-1" title="Cancel Edit" @onclick="CancelEdit">
+                                    <span class="fa fa-times" style="font-size:1.2rem;"></span>
                                 </button>
-                                <button class="btn btn-danger btn-sm" title="Delete" @onclick="() => DeleteOrder(order.ID)">
-                                    <span class="fa fa-trash"></span>
+                            }
+                            else
+                            {
+                                <button class="btn btn-link p-1" title="Edit" @onclick="() => StartEdit(order)">
+                                    <span class="fa fa-pencil-alt" style="font-size:1.2rem;"></span>
                                 </button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="mb-1">
-                                <span class="@GetStatusClass(order.Status)">@order.Status</span>
-                                @if (order.Status == OrderStatusEnum.New || order.Status == OrderStatusEnum.InProgress)
-                                {
-                                    <button class="btn btn-outline-secondary btn-sm ms-2" title="Progress Status" @onclick="() => ProgressStatus(order.ID)">
-                                        <span class="fa fa-forward"></span>
+                            }
+                        </div>
+                        <div class="card-body text-center d-flex flex-column">
+                            @if (editOrderId == order.ID && editOrder != null)
+                            {
+                                <div class="mb-1">
+                                    <select @bind="editOrder.Status" class="form-select form-select-sm w-auto mx-auto">
+                                        @foreach (var status in Enum.GetValues<OrderStatusEnum>())
+                                        {
+                                            <option value="@status">@status</option>
+                                        }
+                                    </select>
+                                </div>
+                                <h5 class="card-title fw-semibold mb-2">Order: @order.ID</h5>
+                                <div class="mb-1">
+                                    <strong>Name:</strong>
+                                    <input class="form-control form-control-sm" @bind="editOrder.Name" />
+                                </div>
+                                <div class="mb-1">
+                                    <strong>Email:</strong>
+                                    <input class="form-control form-control-sm" @bind="editOrder.Email" />
+                                </div>
+                                <div class="mb-1">
+                                    <strong>Address:</strong>
+                                    <input class="form-control form-control-sm" @bind="editOrder.Address" />
+                                </div>
+                                <div class="d-flex justify-content-center gap-2 mt-2">
+                                    <button class="btn btn-success btn-sm" title="Save" @onclick="() => SaveEdit(order.ID)">
+                                        <span class="fa fa-check"></span>
                                     </button>
-                                }
-                            </div>
-                            <h5 class="card-title fw-semibold mb-2">Order @order.ID</h5>
-                            <div class="mb-1"><strong>Name:</strong> @order.Name</div>
-                            <div class="mb-1"><strong>Email:</strong> @order.Email</div>
-                            <div class="mb-1"><strong>Address:</strong> @order.Address</div>
-                        }
+                                    <button class="btn btn-danger btn-sm" title="Delete" @onclick="() => DeleteOrder(order.ID)">
+                                        <span class="fa fa-trash"></span>
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="mb-1">
+                                    <span class="@GetStatusClass(order.Status)">@order.Status</span>
+                                    @if (order.Status == OrderStatusEnum.New || order.Status == OrderStatusEnum.InProgress)
+                                    {
+                                        <button class="btn btn-outline-secondary btn-sm ms-2" title="Progress Status" @onclick="() => ProgressStatus(order.ID)">
+                                            <span class="fa fa-forward"></span>
+                                        </button>
+                                    }
+                                </div>
+                                <h5 class="card-title fw-semibold mb-2">Order @order.ID</h5>
+                                <div class="mb-1"><strong>Name:</strong> @order.Name</div>
+                                <div class="mb-1"><strong>Email:</strong> @order.Email</div>
+                                <div class="mb-1"><strong>Address:</strong> @order.Address</div>
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
-</div>
+    }
 }
 
 @code {
-    const string BASE_URL = "https://localhost:7009/";
+    const string BASE_URL = "https://localhost:7009";
     private bool loading = true;
     private List<Order> _orders = new();
     private string? editOrderId = null;
@@ -113,25 +120,18 @@ else
     protected override async Task OnInitializedAsync()
     {
         _http = new HttpClient();
-        GetAllOrders();
+        await GetAllOrders();
 
     }
 
     private async Task GetAllOrders()
     {
-		var response = await _http.GetAsync($"{BASE_URL}/order");
-        var _orders = await response.Content.ReadFromJsonAsync<List<Order>>();
-        // _orders = new List<Order>
-        // {
-        //     new Order { ID = "1", Email = "alice@example.com", Name = "Alice", Address = "123 Main St", Status = OrderStatusEnum.New},
-        //     new Order { ID = "2", Email = "bob@example.com", Name = "Bob", Address = "456 Oak Ave", Status = OrderStatusEnum.InProgress },
-        //     new Order { ID = "3", Email = "carol@example.com", Name = "Carol", Address = "789 Pine Rd", Status = OrderStatusEnum.Completed },
-        //     new Order { ID = "4", Email = "dave@example.com", Name = "Dave", Address = "321 Maple St", Status = OrderStatusEnum.Cancelled },
-        //     new Order { ID = "5", Email = "eve@example.com", Name = "Eve", Address = "654 Elm St", Status = OrderStatusEnum.New }
-        // };
+        var response = await _http.GetAsync($"{BASE_URL}/order");
+        if (response.IsSuccessStatusCode)
+        {
+            _orders = await response.Content.ReadFromJsonAsync<List<Order>>();
+        }
         loading = false;
-
-
     }
 
     private async Task GetOrder(string id)
@@ -154,22 +154,18 @@ else
         };
     }
 
-    private void SaveEdit(string id)
+    private async Task SaveEdit(string id)
     {
-
-		///////////////////////////////////
-        var idx = _orders.FindIndex(o => o.ID == id);
-        if (idx >= 0 && editOrder != null)
+        var updateDto = new OrderUpdateDto
         {
-            _orders[idx] = new Order
-            {
-                ID = editOrder.ID,
-                Name = editOrder.Name,
-                Email = editOrder.Email,
-                Address = editOrder.Address,
-                Status = editOrder.Status
-            };
-        }
+            Email = editOrder.Email,
+            Name = editOrder.Name,
+            Address = editOrder.Address,
+            Status = editOrder.Status
+        };
+        await _http.PutAsJsonAsync($"{BASE_URL}/order/{id}", updateDto);
+        await GetAllOrders();
+
         editOrderId = null;
         editOrder = null;
     }
@@ -180,26 +176,23 @@ else
         editOrder = null;
     }
 
-    private void DeleteOrder(string id)
+
+    private async Task DeleteOrder(string id)
     {
-        ///////////////////////////////////
-        var idx = _orders.FindIndex(o => o.ID == id);
-        if (idx >= 0)
-        {
-            _orders.RemoveAt(idx);
-        }
+        await _http.DeleteAsync($"{BASE_URL}/order/{id}");
+        await GetAllOrders();
         editOrderId = null;
         editOrder = null;
     }
 
-    private void ProgressStatus(string id)
+    private async Task ProgressStatus(string id)
     {
-        ///////////////////////////////////
         var order = _orders.FirstOrDefault(o => o.ID == id);
         if (order == null) return;
         switch (order.Status)
         {
             case OrderStatusEnum.New:
+
                 order.Status = OrderStatusEnum.InProgress;
                 break;
             case OrderStatusEnum.InProgress:
@@ -210,6 +203,18 @@ else
                 // Do nothing
                 break;
         }
+
+
+        var updateDto = new OrderUpdateDto
+        {
+            Email = order.Email,
+            Name = order.Name,
+            Address = order.Address,
+            Status = order.Status
+        };
+        await _http.PutAsJsonAsync($"{BASE_URL}/order/{id}", updateDto);
+        await GetAllOrders();
+
     }
 
     private string GetStatusClass(OrderStatusEnum status)
