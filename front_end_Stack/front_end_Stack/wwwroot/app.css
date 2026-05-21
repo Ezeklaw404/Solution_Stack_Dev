@@ -156,3 +156,25 @@ h1:focus {
 .review-star.filled {
     color: #ffc107;
 }
+
+/* Order status color classes */
+.order-status-new {
+    color: #1976d2; /* blue */
+    font-weight: bold;
+}
+
+.order-status-inprogress {
+    color: #fbc02d; /* yellow */
+    font-weight: bold;
+}
+
+.order-status-completed {
+    color: #388e3c; /* green */
+    font-weight: bold;
+}
+
+.order-status-cancelled {
+    color: #d32f2f; /* red */
+    font-weight: bold;
+}
+

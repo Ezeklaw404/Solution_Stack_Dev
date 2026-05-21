@@ -1,0 +1,223 @@
+﻿@page "/order-status"
+@rendermode InteractiveServer
+
+@using System.Text.Json
+@using System.Text.Json.Serialization;
+
+@using solution_stack_shared.models
+@using OrderStatusEnum = solution_stack_shared.models.OrderStatus;
+
+
+<PageTitle>Order Status</PageTitle>
+
+<h1 class="mb-3">Order Status</h1>
+
+@if (loading)
+{
+    <div class="d-flex align-items-center gap-3 py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading orders...</span>
+        </div>
+        <span>Loading orders...</span>
+    </div>
+}
+else
+{
+<div class="container-fluid px-0">
+    <div class="row g-4">
+        @foreach (var order in _orders)
+        {
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <div class="card h-100 shadow-sm border-0 review-card position-relative">
+                    <div class="position-absolute top-0 end-0 p-2">
+                        @if (editOrderId == order.ID)
+                        {
+                            <button class="btn btn-link p-1" title="Cancel Edit" @onclick="CancelEdit">
+                                <span class="fa fa-times" style="font-size:1.2rem;"></span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-link p-1" title="Edit" @onclick="() => StartEdit(order)">
+                                <span class="fa fa-pencil-alt" style="font-size:1.2rem;"></span>
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body text-center d-flex flex-column">
+                        @if (editOrderId == order.ID && editOrder != null)
+                        {
+                            <div class="mb-1">
+                                <select @bind="editOrder.Status" class="form-select form-select-sm w-auto mx-auto">
+                                    @foreach (var status in Enum.GetValues<OrderStatusEnum>())
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                            </div>
+                            <h5 class="card-title fw-semibold mb-2">Order @order.ID</h5>
+                            <div class="mb-1">
+                                <strong>Name:</strong>
+                                <input class="form-control form-control-sm" @bind="editOrder.Name" />
+                            </div>
+                            <div class="mb-1">
+                                <strong>Email:</strong>
+                                <input class="form-control form-control-sm" @bind="editOrder.Email" />
+                            </div>
+                            <div class="mb-1">
+                                <strong>Address:</strong>
+                                <input class="form-control form-control-sm" @bind="editOrder.Address" />
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="btn btn-success btn-sm" title="Save" @onclick="() => SaveEdit(order.ID)">
+                                    <span class="fa fa-check"></span>
+                                </button>
+                                <button class="btn btn-danger btn-sm" title="Delete" @onclick="() => DeleteOrder(order.ID)">
+                                    <span class="fa fa-trash"></span>
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-1">
+                                <span class="@GetStatusClass(order.Status)">@order.Status</span>
+                                @if (order.Status == OrderStatusEnum.New || order.Status == OrderStatusEnum.InProgress)
+                                {
+                                    <button class="btn btn-outline-secondary btn-sm ms-2" title="Progress Status" @onclick="() => ProgressStatus(order.ID)">
+                                        <span class="fa fa-forward"></span>
+                                    </button>
+                                }
+                            </div>
+                            <h5 class="card-title fw-semibold mb-2">Order @order.ID</h5>
+                            <div class="mb-1"><strong>Name:</strong> @order.Name</div>
+                            <div class="mb-1"><strong>Email:</strong> @order.Email</div>
+                            <div class="mb-1"><strong>Address:</strong> @order.Address</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+}
+
+@code {
+
+    private bool loading = true;
+    private List<Order> _orders = new();
+    private string? editOrderId = null;
+    private Order? editOrder = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        GetAllOrders();
+
+    }
+
+    private void GetAllOrders()
+    {
+        
+        _orders = new List<Order>
+        {
+            new Order { ID = "1", Email = "alice@example.com", Name = "Alice", Address = "123 Main St", Status = OrderStatusEnum.New},
+            new Order { ID = "2", Email = "bob@example.com", Name = "Bob", Address = "456 Oak Ave", Status = OrderStatusEnum.InProgress },
+            new Order { ID = "3", Email = "carol@example.com", Name = "Carol", Address = "789 Pine Rd", Status = OrderStatusEnum.Completed },
+            new Order { ID = "4", Email = "dave@example.com", Name = "Dave", Address = "321 Maple St", Status = OrderStatusEnum.Cancelled },
+            new Order { ID = "5", Email = "eve@example.com", Name = "Eve", Address = "654 Elm St", Status = OrderStatusEnum.New }
+        };
+        loading = false;
+
+
+    }
+
+    private void GetOrder(string id)
+    {
+        
+    }
+
+
+    private void StartEdit(Order order)
+    {
+        editOrderId = order.ID;
+        editOrder = new Order
+        {
+            ID = order.ID,
+            Name = order.Name,
+            Email = order.Email,
+            Address = order.Address,
+            Status = order.Status
+        };
+    }
+
+    private void SaveEdit(string id)
+    {
+
+		///////////////////////////////////
+        var idx = _orders.FindIndex(o => o.ID == id);
+        if (idx >= 0 && editOrder != null)
+        {
+            _orders[idx] = new Order
+            {
+                ID = editOrder.ID,
+                Name = editOrder.Name,
+                Email = editOrder.Email,
+                Address = editOrder.Address,
+                Status = editOrder.Status
+            };
+        }
+        editOrderId = null;
+        editOrder = null;
+    }
+
+    private void CancelEdit()
+    {
+        editOrderId = null;
+        editOrder = null;
+    }
+
+    private void DeleteOrder(string id)
+    {
+        ///////////////////////////////////
+        var idx = _orders.FindIndex(o => o.ID == id);
+        if (idx >= 0)
+        {
+            _orders.RemoveAt(idx);
+        }
+        editOrderId = null;
+        editOrder = null;
+    }
+
+    private void ProgressStatus(string id)
+    {
+        ///////////////////////////////////
+        var order = _orders.FirstOrDefault(o => o.ID == id);
+        if (order == null) return;
+        switch (order.Status)
+        {
+            case OrderStatusEnum.New:
+                order.Status = OrderStatusEnum.InProgress;
+                break;
+            case OrderStatusEnum.InProgress:
+                order.Status = OrderStatusEnum.Completed;
+                break;
+            case OrderStatusEnum.Completed:
+            case OrderStatusEnum.Cancelled:
+                // Do nothing
+                break;
+        }
+    }
+
+    private string GetStatusClass(OrderStatusEnum status)
+    {
+        return status switch
+        {
+            OrderStatusEnum.New => "order-status-new",
+            OrderStatusEnum.InProgress => "order-status-inprogress",
+            OrderStatusEnum.Completed => "order-status-completed",
+            OrderStatusEnum.Cancelled => "order-status-cancelled",
+            _ => string.Empty
+        };
+    }
+
+}
+
+
