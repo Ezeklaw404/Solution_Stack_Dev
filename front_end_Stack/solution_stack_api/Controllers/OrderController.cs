@@ -41,7 +41,7 @@ namespace solution_stack_api.Controllers
                 ID = Guid.NewGuid().ToString(),
                 Email = order.Email,
                 Name = order.Name,
-                Adress = order.Adress,
+                Address = order.Address,
                 Status = OrderStatus.New
             };
             orders.Add(newOrder);
@@ -56,7 +56,7 @@ namespace solution_stack_api.Controllers
             {
                 existingOrder.Email = order.Email;
                 existingOrder.Name = order.Name;
-                existingOrder.Adress = order.Adress;
+                existingOrder.Address = order.Address;
                 existingOrder.Status = order.Status;
             }
         }

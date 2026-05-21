@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace solution_stack_shared.models
 {
-    public class OrderUpdateDto
+    public class OrderUpdateDto : OrderBase
     {
-        public string Email { get; set; }
-        public string Name { get; set; }
-        public string Adress { get; set; }
         public OrderStatus Status { get; set; }
     }
 }
