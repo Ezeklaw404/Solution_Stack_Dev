@@ -52,6 +52,7 @@ else
 }
 
 @code {
+
     private HttpClient _http;
     private bool loading = true;
     private List<Review> _reviews = new();
@@ -80,23 +81,7 @@ else
             review.Stars = random.Next(1, 6);
         } 
         loading = false;
-    }
-
-
-    private class Review
-    {
-        [JsonPropertyName("id")]
-        public string Id { get; set; } = string.Empty;
-        [JsonPropertyName("url")]
-        public string ImageUrl { get; set; } = string.Empty;
-        public int Stars { get; set; } 
-
-
-    }
-
-
-            
-
+    }          
 
 // {
     // id: "3ej",

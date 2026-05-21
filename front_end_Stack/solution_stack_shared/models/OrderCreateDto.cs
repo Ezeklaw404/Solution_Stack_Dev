@@ -9,11 +9,5 @@ namespace solution_stack_shared.models
 {
     public class OrderCreateDto : OrderBase
     {
-        [Required]
-        public string Email { get; set; }
-        [Required]
-        public string Name { get; set; }
-        [Required]
-        public string Address { get; set; }
     }
 }

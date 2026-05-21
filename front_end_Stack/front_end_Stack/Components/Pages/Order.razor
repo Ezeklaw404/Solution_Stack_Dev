@@ -30,9 +30,9 @@
                     <ValidationMessage For="() => Input.Name" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Adress" class="form-control" autocomplete="adress" aria-required="true" placeholder="adress" />
-                    <label for="Adress" class="form-label">Adress</label>
-                    <ValidationMessage For="() => Input.Adress" class="text-danger" />
+                    <InputText @bind-Value="Input.Address" class="form-control" autocomplete="address" aria-required="true" placeholder="address" />
+                    <label for="Address" class="form-label">Address</label>
+                    <ValidationMessage For="() => Input.Address" class="text-danger" />
                 </div>
                 <div>
                     <button type="submit" class="w-100 btn btn-lg btn-primary">Submit</button>
@@ -43,35 +43,30 @@
 </div>
 @code {
     private string? errorMessage;
-
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    private HttpClient _http = new HttpClient();
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
-
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
+    private OrderCreateDto Input { get; set; } = new();
 
 
     public async Task Success()
     {
-		await JSRuntime.InvokeVoidAsync("alert", "Order Complete");
-    }
-
-
-
-
-    private sealed class InputModel
-    {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = "";
-
-        [Required]
-        public string Name { get; set; } = "";
-
-        [Required]
-        public string Adress { get; set; } = "";
+        const string baseUrl = $"https://localhost:7009/Order";
+        try
+        {
+            var response = await _http.PostAsJsonAsync(baseUrl, Input);
+            if (!response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Order Failed");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Order Complete");
+            }
+        }
+        catch(Exception e)
+        {
+             await JSRuntime.InvokeVoidAsync("alert", $"Order Failed: {e}");
+        }
     }
 }
