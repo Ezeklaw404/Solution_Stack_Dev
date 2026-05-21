@@ -1,6 +1,7 @@
 ﻿@page "/order-status"
 @rendermode InteractiveServer
 
+@inject IHttpClientFactory HttpClientFactory
 @using System.Text.Json
 @using System.Text.Json.Serialization;
 
@@ -101,37 +102,42 @@ else
 }
 
 @code {
-
+    const string BASE_URL = "https://localhost:7009/";
     private bool loading = true;
     private List<Order> _orders = new();
     private string? editOrderId = null;
     private Order? editOrder = null;
 
+    private HttpClient _http;
+
     protected override async Task OnInitializedAsync()
     {
+        _http = new HttpClient();
         GetAllOrders();
 
     }
 
-    private void GetAllOrders()
+    private async Task GetAllOrders()
     {
-        
-        _orders = new List<Order>
-        {
-            new Order { ID = "1", Email = "alice@example.com", Name = "Alice", Address = "123 Main St", Status = OrderStatusEnum.New},
-            new Order { ID = "2", Email = "bob@example.com", Name = "Bob", Address = "456 Oak Ave", Status = OrderStatusEnum.InProgress },
-            new Order { ID = "3", Email = "carol@example.com", Name = "Carol", Address = "789 Pine Rd", Status = OrderStatusEnum.Completed },
-            new Order { ID = "4", Email = "dave@example.com", Name = "Dave", Address = "321 Maple St", Status = OrderStatusEnum.Cancelled },
-            new Order { ID = "5", Email = "eve@example.com", Name = "Eve", Address = "654 Elm St", Status = OrderStatusEnum.New }
-        };
+		var response = await _http.GetAsync($"{BASE_URL}/order");
+        var _orders = await response.Content.ReadFromJsonAsync<List<Order>>();
+        // _orders = new List<Order>
+        // {
+        //     new Order { ID = "1", Email = "alice@example.com", Name = "Alice", Address = "123 Main St", Status = OrderStatusEnum.New},
+        //     new Order { ID = "2", Email = "bob@example.com", Name = "Bob", Address = "456 Oak Ave", Status = OrderStatusEnum.InProgress },
+        //     new Order { ID = "3", Email = "carol@example.com", Name = "Carol", Address = "789 Pine Rd", Status = OrderStatusEnum.Completed },
+        //     new Order { ID = "4", Email = "dave@example.com", Name = "Dave", Address = "321 Maple St", Status = OrderStatusEnum.Cancelled },
+        //     new Order { ID = "5", Email = "eve@example.com", Name = "Eve", Address = "654 Elm St", Status = OrderStatusEnum.New }
+        // };
         loading = false;
 
 
     }
 
-    private void GetOrder(string id)
+    private async Task GetOrder(string id)
     {
-        
+        var response = await _http.GetAsync($"{BASE_URL}/order/{id}");
+        var _orders = await response.Content.ReadFromJsonAsync<List<Order>>();
     }
 
 
