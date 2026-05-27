@@ -134,6 +134,7 @@ else
         loading = false;
     }
 
+    // currently unusable on the front end
     private async Task GetOrder(string id)
     {
         var response = await _http.GetAsync($"{BASE_URL}/order/{id}");
@@ -154,6 +155,7 @@ else
         };
     }
 
+
     private async Task SaveEdit(string id)
     {
         var updateDto = new OrderUpdateDto
@@ -166,8 +168,7 @@ else
         await _http.PutAsJsonAsync($"{BASE_URL}/order/{id}", updateDto);
         await GetAllOrders();
 
-        editOrderId = null;
-        editOrder = null;
+        CancelEdit();
     }
 
     private void CancelEdit()
@@ -181,8 +182,7 @@ else
     {
         await _http.DeleteAsync($"{BASE_URL}/order/{id}");
         await GetAllOrders();
-        editOrderId = null;
-        editOrder = null;
+        CancelEdit();
     }
 
     private async Task ProgressStatus(string id)
@@ -192,15 +192,12 @@ else
         switch (order.Status)
         {
             case OrderStatusEnum.New:
-
                 order.Status = OrderStatusEnum.InProgress;
                 break;
             case OrderStatusEnum.InProgress:
                 order.Status = OrderStatusEnum.Completed;
                 break;
-            case OrderStatusEnum.Completed:
-            case OrderStatusEnum.Cancelled:
-                // Do nothing
+            default: // Completed or Canceled - The end of the line
                 break;
         }
 
