@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using solution_stack_api.Data;
 using solution_stack_shared.models;
 
 namespace solution_stack_api.Controllers
@@ -8,24 +10,24 @@ namespace solution_stack_api.Controllers
     public class OrderController : ControllerBase
     {
         private readonly ILogger<OrderController> _logger;
+        private readonly AppDbContext _context;
 
-        private static List<Order> orders = new List<Order> { };
-
-        public OrderController(ILogger<OrderController> logger)
+        public OrderController(ILogger<OrderController> logger, AppDbContext context)
         {
             _logger = logger;
+            _context = context;
         }
 
         [HttpGet(Name = "GetOrders")]
-        public IEnumerable<Order> Get()
+        public async Task<ActionResult<IEnumerable<Order>>> Get()
         {
-            return orders;
+            return await _context.Orders.ToListAsync();
         }
 
         [HttpGet("{id}", Name = "GetOrderById")]
-        public ActionResult<Order> Get(string id)
+        public async Task<ActionResult<Order>> Get(string id)
         {
-            var order = orders.FirstOrDefault(o => o.ID == id);
+            var order = await _context.Orders.FindAsync(id);
             if (order == null)
             {
                 return NotFound();
@@ -34,9 +36,9 @@ namespace solution_stack_api.Controllers
         }
 
         [HttpPost(Name = "CreateOrder")]
-        public void Post([FromBody] OrderCreateDto order)
+        public async Task<IActionResult> Post([FromBody] OrderCreateDto order)
         {
-            Order newOrder = new Order
+            var newOrder = new Order
             {
                 ID = Guid.NewGuid().ToString(),
                 Email = order.Email,
@@ -44,31 +46,40 @@ namespace solution_stack_api.Controllers
                 Address = order.Address,
                 Status = OrderStatus.New
             };
-            orders.Add(newOrder);
+            _context.Orders.Add(newOrder);
+            await _context.SaveChangesAsync();
+            return CreatedAtRoute("GetOrderById", new { id = newOrder.ID }, newOrder);
         }
 
         [HttpPut("{id}", Name = "UpdateOrders")]
-        public void Put([FromBody] OrderUpdateDto order)
+        public async Task<IActionResult> Put(string id, [FromBody] OrderUpdateDto order)
         {
-            var ID = Request.RouteValues["id"]?.ToString();
-            var existingOrder = orders.FirstOrDefault(o => o.ID == ID);
-            if (existingOrder != null)
+            var existingOrder = await _context.Orders.FindAsync(id);
+            if (existingOrder == null)
             {
-                existingOrder.Email = order.Email;
-                existingOrder.Name = order.Name;
-                existingOrder.Address = order.Address;
-                existingOrder.Status = order.Status;
+                return NotFound();
             }
+
+            existingOrder.Email = order.Email;
+            existingOrder.Name = order.Name;
+            existingOrder.Address = order.Address;
+            existingOrder.Status = order.Status;
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
         [HttpDelete("{id}", Name = "DeleteOrderById")]
-        public void Delete(string id)
+        public async Task<IActionResult> Delete(string id)
         {
-            var orderToRemove = orders.FirstOrDefault(o => o.ID == id);
-            if (orderToRemove != null)
+            var orderToRemove = await _context.Orders.FindAsync(id);
+            if (orderToRemove == null)
             {
-                orders.Remove(orderToRemove);
+                return NotFound();
             }
+
+            _context.Orders.Remove(orderToRemove);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
     }
 }
