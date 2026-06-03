@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,6 +25,56 @@ namespace solution_stack_api.Controllers
         public async Task<ActionResult<IEnumerable<Order>>> Get()
         {
             return await _context.Orders.ToListAsync();
+        }
+
+        [Authorize(Roles = "User,Admin")]
+        [HttpGet("my", Name = "GetMyOrders")]
+        public async Task<ActionResult<IEnumerable<Order>>> GetMyOrders()
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(email))
+            {
+                return Unauthorized();
+            }
+
+            var orders = await _context.Orders
+                .Where(o => o.Email == email)
+                .OrderByDescending(o => o.Status == OrderStatus.New || o.Status == OrderStatus.InProgress)
+                .ThenByDescending(o => o.ID)
+                .ToListAsync();
+
+            return orders;
+        }
+
+        [Authorize(Roles = "User,Admin")]
+        [HttpPost("{id}/cancel", Name = "CancelOrder")]
+        public async Task<ActionResult<Order>> Cancel(string id)
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            if (string.IsNullOrEmpty(email))
+            {
+                return Unauthorized();
+            }
+
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            if (!string.Equals(order.Email, email, StringComparison.OrdinalIgnoreCase))
+            {
+                return Forbid();
+            }
+
+            if (order.Status is OrderStatus.Completed or OrderStatus.Cancelled)
+            {
+                return BadRequest("Only active orders can be cancelled.");
+            }
+
+            order.Status = OrderStatus.Cancelled;
+            await _context.SaveChangesAsync();
+            return order;
         }
 
         [Authorize(Roles = "Admin")]
