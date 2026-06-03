@@ -1,0 +1,171 @@
+﻿@page "/my-orders"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@attribute [Authorize(Roles = "User,Admin")]
+
+@using front_end_Stack.Services
+@inject AuthorizedApiClientFactory ApiClientFactory
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+
+@using solution_stack_shared.models
+@using OrderStatusEnum = solution_stack_shared.models.OrderStatus;
+
+<PageTitle>My Orders</PageTitle>
+
+<h1 class="mb-3">My Orders</h1>
+
+@if (loading)
+{
+    <div class="d-flex align-items-center gap-3 py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading orders...</span>
+        </div>
+        <span>Loading orders...</span>
+    </div>
+}
+else
+{
+    @if (myOrders == null || !myOrders.Any())
+    {
+        <div class="alert alert-info">You have no orders.</div>
+    }
+    else
+    {
+        <div class="container-fluid px-0">
+            <div class="row g-4">
+                @foreach (var order in myOrders)
+                {
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                        <div class="card h-100 shadow-sm border-0 review-card">
+                            <div class="card-body text-center d-flex flex-column">
+                                <div class="mb-1">
+                                    <span class="@GetStatusClass(order.Status)">@order.Status</span>
+                                    @if (order.Status != OrderStatusEnum.Completed && order.Status != OrderStatusEnum.Cancelled)
+                                    {
+                                        <button class="btn btn-outline-danger btn-sm ms-2"
+                                                title="Cancel Order"
+                                                @onclick="() => ConfirmCancel(order.ID)">
+                                            <span class="fa fa-times"></span>
+                                        </button>
+                                    }
+                                </div>
+                                <h5 class="card-title fw-semibold mb-2">Order @order.ID</h5>
+                                <div class="mb-1"><strong>Name:</strong> @order.Name</div>
+                                <div class="mb-1"><strong>Email:</strong> @order.Email</div>
+                                <div class="mb-1"><strong>Address:</strong> @order.Address</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+@if (showCancelConfirm)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cancel Order</h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to cancel this order?
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="DismissCancel">No, keep it</button>
+                    <button class="btn btn-danger" @onclick="ExecuteCancel">Yes, cancel it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool loading = true;
+    private List<Order> myOrders = new();
+    private string? userEmail;
+
+    private bool showCancelConfirm = false;
+    private string? pendingCancelId = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userEmail = user.Identity?.Name
+            ?? user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+            ?? "";
+
+        await LoadMyOrders();
+    }
+
+    private async Task LoadMyOrders()
+    {
+        var http = await ApiClientFactory.CreateClientAsync();
+        var response = await http.GetAsync("/Order/mine");
+        if (response.IsSuccessStatusCode)
+        {
+            var all = await response.Content.ReadFromJsonAsync<List<Order>>();
+            myOrders = all?
+                .Where(o => o.Email.Equals(userEmail, StringComparison.OrdinalIgnoreCase))
+                .ToList() ?? new();
+        }
+        loading = false;
+    }
+
+    private void ConfirmCancel(string id)
+    {
+        pendingCancelId = id;
+        showCancelConfirm = true;
+    }
+
+    private void DismissCancel()
+    {
+        pendingCancelId = null;
+        showCancelConfirm = false;
+    }
+
+    private async Task ExecuteCancel()
+    {
+        if (pendingCancelId == null) return;
+
+        var order = myOrders.FirstOrDefault(o => o.ID == pendingCancelId);
+        if (order == null) { DismissCancel(); return; }
+
+        var updateDto = new OrderUpdateDto
+        {
+            Email = order.Email,
+            Name = order.Name,
+            Address = order.Address,
+            Status = OrderStatusEnum.Cancelled
+        };
+
+        var http = await ApiClientFactory.CreateClientAsync();
+        var response = await http.PutAsJsonAsync($"/Order/{pendingCancelId}", updateDto);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to cancel order.");
+        }
+
+        DismissCancel();
+        await LoadMyOrders();
+    }
+
+    private string GetStatusClass(OrderStatusEnum status)
+    {
+        return status switch
+        {
+            OrderStatusEnum.New => "order-status-new",
+            OrderStatusEnum.InProgress => "order-status-inprogress",
+            OrderStatusEnum.Completed => "order-status-completed",
+            OrderStatusEnum.Cancelled => "order-status-cancelled",
+            _ => string.Empty
+        };
+    }
+}

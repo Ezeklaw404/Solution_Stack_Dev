@@ -2,6 +2,7 @@
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using solution_stack_shared.models
 
 @attribute [Authorize(Roles = "User,Admin")]
@@ -9,7 +10,7 @@
 @using front_end_Stack.Services
 @inject IJSRuntime JSRuntime
 @inject AuthorizedApiClientFactory ApiClientFactory
-
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
 <div class="order-page-wrapper">
@@ -25,7 +26,7 @@
                 <DataAnnotationsValidator />
                 <hr />
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" aria-required="true" placeholder="name@example.com" />
+                    <InputText @bind-Value="Input.Email" class="form-control" readonly autocomplete="email" aria-required="true" placeholder="name@example.com" />
                     <label for="email" class="form-label">Email</label>
                     <ValidationMessage For="() => Input.Email" class="text-danger" />
                 </div>
@@ -49,6 +50,15 @@
 @code {
     [SupplyParameterFromForm]
     private OrderCreateDto Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        Input.Email = user.Identity?.Name
+            ?? user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+            ?? "";
+    }
 
     public async Task Success()
     {
