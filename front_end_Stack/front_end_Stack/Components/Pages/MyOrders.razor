@@ -107,7 +107,7 @@ else
     private async Task LoadMyOrders()
     {
         var http = await ApiClientFactory.CreateClientAsync();
-        var response = await http.GetAsync("/Order/mine");
+        var response = await http.GetAsync("/Orders/my");
         if (response.IsSuccessStatusCode)
         {
             var all = await response.Content.ReadFromJsonAsync<List<Order>>();
