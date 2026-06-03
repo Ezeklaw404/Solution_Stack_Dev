@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using solution_stack_api.Data;
@@ -18,12 +19,14 @@ namespace solution_stack_api.Controllers
             _context = context;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet(Name = "GetOrders")]
         public async Task<ActionResult<IEnumerable<Order>>> Get()
         {
             return await _context.Orders.ToListAsync();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpGet("{id}", Name = "GetOrderById")]
         public async Task<ActionResult<Order>> Get(string id)
         {
@@ -35,6 +38,7 @@ namespace solution_stack_api.Controllers
             return order;
         }
 
+        [Authorize(Roles = "User,Admin")]
         [HttpPost(Name = "CreateOrder")]
         public async Task<IActionResult> Post([FromBody] OrderCreateDto order)
         {
@@ -51,6 +55,7 @@ namespace solution_stack_api.Controllers
             return CreatedAtRoute("GetOrderById", new { id = newOrder.ID }, newOrder);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}", Name = "UpdateOrders")]
         public async Task<IActionResult> Put(string id, [FromBody] OrderUpdateDto order)
         {
@@ -68,6 +73,7 @@ namespace solution_stack_api.Controllers
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}", Name = "DeleteOrderById")]
         public async Task<IActionResult> Delete(string id)
         {

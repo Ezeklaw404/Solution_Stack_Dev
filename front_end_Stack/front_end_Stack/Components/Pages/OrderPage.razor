@@ -1,9 +1,14 @@
 ﻿@page "/order"
 
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using solution_stack_shared.models
 
+@attribute [Authorize(Roles = "User,Admin")]
+
+@using front_end_Stack.Services
 @inject IJSRuntime JSRuntime
-@inject NavigationManager NavigationManager
+@inject AuthorizedApiClientFactory ApiClientFactory
 
 @rendermode InteractiveServer
 
@@ -42,19 +47,15 @@
     </div>
 </div>
 @code {
-    private string? errorMessage;
-    private HttpClient _http = new HttpClient();
-
     [SupplyParameterFromForm]
     private OrderCreateDto Input { get; set; } = new();
 
-
     public async Task Success()
     {
-        const string baseUrl = $"https://localhost:7009/Order";
+        var http = await ApiClientFactory.CreateClientAsync();
         try
         {
-            var response = await _http.PostAsJsonAsync(baseUrl, Input);
+            var response = await http.PostAsJsonAsync("/Order", Input);
             if (!response.IsSuccessStatusCode)
             {
                 await JSRuntime.InvokeVoidAsync("alert", "Order Failed");

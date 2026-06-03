@@ -1,7 +1,12 @@
 ﻿@page "/order-status"
 @rendermode InteractiveServer
 
-@inject IHttpClientFactory HttpClientFactory
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize(Roles = "Admin")]
+
+@using front_end_Stack.Services
+@inject AuthorizedApiClientFactory ApiClientFactory
 @using System.Text.Json
 @using System.Text.Json.Serialization;
 
@@ -109,24 +114,20 @@ else
 }
 
 @code {
-    const string BASE_URL = "https://localhost:7009";
     private bool loading = true;
     private List<Order> _orders = new();
     private string? editOrderId = null;
     private Order? editOrder = null;
 
-    private HttpClient _http;
-
     protected override async Task OnInitializedAsync()
     {
-        _http = new HttpClient();
         await GetAllOrders();
-
     }
 
     private async Task GetAllOrders()
     {
-        var response = await _http.GetAsync($"{BASE_URL}/order");
+        var http = await ApiClientFactory.CreateClientAsync();
+        var response = await http.GetAsync("/Order");
         if (response.IsSuccessStatusCode)
         {
             _orders = await response.Content.ReadFromJsonAsync<List<Order>>();
@@ -137,7 +138,8 @@ else
     // currently unusable on the front end
     private async Task GetOrder(string id)
     {
-        var response = await _http.GetAsync($"{BASE_URL}/order/{id}");
+        var http = await ApiClientFactory.CreateClientAsync();
+        var response = await http.GetAsync($"/Order/{id}");
         var _orders = await response.Content.ReadFromJsonAsync<List<Order>>();
     }
 
@@ -165,7 +167,8 @@ else
             Address = editOrder.Address,
             Status = editOrder.Status
         };
-        await _http.PutAsJsonAsync($"{BASE_URL}/order/{id}", updateDto);
+        var http = await ApiClientFactory.CreateClientAsync();
+        await http.PutAsJsonAsync($"/Order/{id}", updateDto);
         await GetAllOrders();
 
         CancelEdit();
@@ -180,7 +183,8 @@ else
 
     private async Task DeleteOrder(string id)
     {
-        await _http.DeleteAsync($"{BASE_URL}/order/{id}");
+        var http = await ApiClientFactory.CreateClientAsync();
+        await http.DeleteAsync($"/Order/{id}");
         await GetAllOrders();
         CancelEdit();
     }
@@ -209,9 +213,9 @@ else
             Address = order.Address,
             Status = order.Status
         };
-        await _http.PutAsJsonAsync($"{BASE_URL}/order/{id}", updateDto);
+        var http = await ApiClientFactory.CreateClientAsync();
+        await http.PutAsJsonAsync($"/Order/{id}", updateDto);
         await GetAllOrders();
-
     }
 
     private string GetStatusClass(OrderStatusEnum status)

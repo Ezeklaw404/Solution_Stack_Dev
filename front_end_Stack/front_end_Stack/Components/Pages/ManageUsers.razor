@@ -1,0 +1,158 @@
+@page "/admin/users"
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using front_end_Stack.Data
+
+@attribute [Authorize(Roles = "Admin")]
+
+@inject UserManager<ApplicationUser> UserManager
+
+@rendermode InteractiveServer
+
+<PageTitle>Manage Users</PageTitle>
+
+<h1 class="mb-3">Manage Users</h1>
+<p class="text-muted mb-4">Promote registered users to the Admin role.</p>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="alert alert-info">@statusMessage</div>
+}
+
+@if (loading)
+{
+    <div class="d-flex align-items-center gap-3 py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading users...</span>
+        </div>
+        <span>Loading users...</span>
+    </div>
+}
+else if (users.Count == 0)
+{
+    <div class="alert alert-info">No users found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Roles</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in users)
+                {
+                    <tr>
+                        <td>@entry.Email</td>
+                        <td>
+                            @if (entry.IsAdmin)
+                            {
+                                <span class="badge bg-primary">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">User</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (!entry.IsAdmin)
+                            {
+                                <button class="btn btn-sm btn-primary"
+                                        disabled="@(promotingUserId == entry.Id)"
+                                        @onclick="() => PromoteToAdminAsync(entry.Id)">
+                                    @(promotingUserId == entry.Id ? "Promoting..." : "Make Admin")
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Already admin</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool loading = true;
+    private string? statusMessage;
+    private string? promotingUserId;
+    private List<UserRow> users = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsersAsync();
+    }
+
+    private async Task LoadUsersAsync()
+    {
+        loading = true;
+        var allUsers = UserManager.Users.OrderBy(u => u.Email).ToList();
+        var rows = new List<UserRow>();
+
+        foreach (var user in allUsers)
+        {
+            rows.Add(new UserRow
+            {
+                Id = user.Id,
+                Email = user.Email ?? user.UserName ?? user.Id,
+                IsAdmin = await UserManager.IsInRoleAsync(user, IdentitySeedData.AdminRole)
+            });
+        }
+
+        users = rows;
+        loading = false;
+    }
+
+    private async Task PromoteToAdminAsync(string userId)
+    {
+        statusMessage = null;
+        promotingUserId = userId;
+
+        try
+        {
+            var user = await UserManager.FindByIdAsync(userId);
+            if (user is null)
+            {
+                statusMessage = "User not found.";
+                return;
+            }
+
+            if (await UserManager.IsInRoleAsync(user, IdentitySeedData.AdminRole))
+            {
+                statusMessage = $"{user.Email} is already an admin.";
+                await LoadUsersAsync();
+                return;
+            }
+
+            var result = await UserManager.AddToRoleAsync(user, IdentitySeedData.AdminRole);
+            if (result.Succeeded)
+            {
+                statusMessage = $"{user.Email} was promoted to Admin. They may need to sign out and back in for all admin features to apply.";
+                await LoadUsersAsync();
+            }
+            else
+            {
+                statusMessage = $"Failed to promote user: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            }
+        }
+        finally
+        {
+            promotingUserId = null;
+        }
+    }
+
+    private sealed class UserRow
+    {
+        public string Id { get; init; } = "";
+        public string Email { get; init; } = "";
+        public bool IsAdmin { get; init; }
+    }
+}
