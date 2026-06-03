@@ -146,7 +146,7 @@ else
         };
 
         var http = await ApiClientFactory.CreateClientAsync();
-        var response = await http.PutAsJsonAsync($"/Order/{pendingCancelId}", updateDto);
+        var response = await http.PutAsJsonAsync($"/Order/{pendingCancelId}/cancel", updateDto);
 
         if (!response.IsSuccessStatusCode)
         {
