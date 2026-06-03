@@ -107,7 +107,7 @@ else
     private async Task LoadMyOrders()
     {
         var http = await ApiClientFactory.CreateClientAsync();
-        var response = await http.GetAsync("/Orders/my");
+        var response = await http.GetAsync("/Order/my");
         if (response.IsSuccessStatusCode)
         {
             var all = await response.Content.ReadFromJsonAsync<List<Order>>();
@@ -134,19 +134,8 @@ else
     {
         if (pendingCancelId == null) return;
 
-        var order = myOrders.FirstOrDefault(o => o.ID == pendingCancelId);
-        if (order == null) { DismissCancel(); return; }
-
-        var updateDto = new OrderUpdateDto
-        {
-            Email = order.Email,
-            Name = order.Name,
-            Address = order.Address,
-            Status = OrderStatusEnum.Cancelled
-        };
-
         var http = await ApiClientFactory.CreateClientAsync();
-        var response = await http.PutAsJsonAsync($"/Order/{pendingCancelId}/cancel", updateDto);
+        var response = await http.PostAsync($"/Order/{pendingCancelId}/cancel", null);
 
         if (!response.IsSuccessStatusCode)
         {
